@@ -25,7 +25,6 @@ AddEventHandler('onResourceStart', function(resource)
                 item     = { name = row.item_name, model = row.item_model }
             })
         end
-        print(('[rs_camp] %d campamentos cargados.'):format(#loadedCamps))
     end)
 end)
 
