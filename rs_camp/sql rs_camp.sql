@@ -1,7 +1,6 @@
 CREATE TABLE IF NOT EXISTS `rs_camp` (
   `id` int(10) unsigned NOT NULL AUTO_INCREMENT,
   `owner_citizenid` varchar(255) DEFAULT NULL,
-  `owner_charid` int(11) DEFAULT NULL,
   `x` double DEFAULT NULL,
   `y` double DEFAULT NULL,
   `z` double DEFAULT NULL,
