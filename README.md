@@ -26,9 +26,6 @@ https://github.com/riversafe33/uiprompt
 
 6 - Now the adjustment speed is changed with the Mouse Scroll instead of the input, and it's visible in the NUI.
 
-
-![1](https://github.com/user-attachments/assets/9321d729-a012-4019-9a9c-14d40c5ae75c)
-
 ![2](https://github.com/user-attachments/assets/ee63b351-712a-4125-8979-beb62bff7d87)
 
 ![4](https://github.com/user-attachments/assets/838b2c34-9f3a-4299-8299-65c7bb7dd7ac)
