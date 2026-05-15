@@ -1,15 +1,6 @@
--- =============================================
---   rs_camp - server.lua
---   Convertido de VORP Core → RSG Core
---   Inventario: rsg-inventory | DB: oxmysql
--- =============================================
-
 local RSGCore = exports['rsg-core']:GetCoreObject()
 local loadedCamps = {}
 
--- ──────────────────────────────────────────────
--- UTILIDAD: registrar stash de cofre
--- ──────────────────────────────────────────────
 local function registerStorage(stashId, label, slots, maxweight)
     exports['rsg-inventory']:CreateInventory(stashId, {
         label     = label,
@@ -18,9 +9,6 @@ local function registerStorage(stashId, label, slots, maxweight)
     })
 end
 
--- ──────────────────────────────────────────────
--- CARGA INICIAL DE CAMPAMENTOS
--- ──────────────────────────────────────────────
 AddEventHandler('onResourceStart', function(resource)
     if GetCurrentResourceName() ~= resource then return end
 
@@ -37,21 +25,14 @@ AddEventHandler('onResourceStart', function(resource)
                 item     = { name = row.item_name, model = row.item_model }
             })
         end
-        print(('[rs_camp] %d campamentos cargados.'):format(#loadedCamps))
     end)
 end)
 
--- ──────────────────────────────────────────────
--- SINCRONIZAR CAMPAMENTOS AL CLIENTE
--- ──────────────────────────────────────────────
 RegisterNetEvent('rs_camp:server:requestCamps')
 AddEventHandler('rs_camp:server:requestCamps', function()
     TriggerClientEvent('rs_camp:client:receiveCamps', source, loadedCamps)
 end)
 
--- ──────────────────────────────────────────────
--- GUARDAR CAMPAMENTO (colocar objeto)
--- ──────────────────────────────────────────────
 RegisterNetEvent('rs_camp:server:savecampOwner')
 AddEventHandler('rs_camp:server:savecampOwner', function(coords, rotation, itemName)
     local src       = source
@@ -99,9 +80,6 @@ AddEventHandler('rs_camp:server:savecampOwner', function(coords, rotation, itemN
     end)
 end)
 
--- ──────────────────────────────────────────────
--- RECOGER CAMPAMENTO (solo propietario / admin)
--- ──────────────────────────────────────────────
 RegisterNetEvent('rs_camp:server:pickUpByOwner')
 AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
     local src    = source
@@ -110,9 +88,8 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
 
     local citizenid      = Player.PlayerData.citizenid
     local charId         = Player.PlayerData.cid
-    local characterGroup = Player.PlayerData.job.name   -- grupo / trabajo del jugador
+    local characterGroup = Player.PlayerData.job.name
 
-    -- ¿Es un grupo admin?
     local function IsAuthorizedGroup(group)
         for _, allowed in ipairs(Config.AdminGroups) do
             if group == allowed then return true end
@@ -120,7 +97,6 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
         return false
     end
 
-    -- ¿El modelo es un cofre?
     local function IsChest(objectModel)
         for _, chest in ipairs(Config.Chests) do
             if chest.object == objectModel then return true end
@@ -128,7 +104,6 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
         return false
     end
 
-    -- Elimina el campamento de la DB, memoria y clientes
     local function RemoveCamp(row)
         TriggerClientEvent('rs_camp:client:removeCamp', -1, uniqueId)
 
@@ -140,7 +115,20 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
         end
 
         exports.oxmysql:execute('DELETE FROM rs_camp WHERE id = ?', { uniqueId }, function(result)
+
+            if IsChest(row.item_model) then
+                local stashId = 'camp_storage_' .. uniqueId
+
+                Wait(500)
+
+                exports.oxmysql:execute(
+                    'DELETE FROM inventories WHERE identifier = ?',
+                    { stashId }
+                )
+            end
+
             local affected = result and (result.affectedRows or result.affected_rows or result.changes)
+
             if affected and affected > 0 then
                 if row.item_name then
                     exports['rsg-inventory']:AddItem(src, row.item_name, 1, nil, nil, 'camp-pickup')
@@ -150,7 +138,6 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
         end)
     end
 
-    -- Consulta el campamento en la DB
     exports.oxmysql:execute('SELECT * FROM rs_camp WHERE id = ?', { uniqueId }, function(results)
         if not results or #results == 0 then
             TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src, Config.Text.Dont, "menu_textures", "cross", "COLOR_RED", 3000)
@@ -159,20 +146,17 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
 
         local row = results[1]
 
-        -- Verificar propiedad o permiso admin
         local isOwner = (row.owner_identifier == citizenid and row.owner_charid == charId)
         if not (isOwner or IsAuthorizedGroup(characterGroup)) then
             TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src, Config.Text.Dont, "menu_textures", "cross", "COLOR_RED", 3000)
             return
         end
 
-        -- Si NO es cofre, recoger directamente
         if not IsChest(row.item_model) then
             RemoveCamp(row)
             return
         end
 
-        -- Si es cofre, verificar que esté vacío
         local stashId = 'camp_storage_' .. uniqueId
         local stash   = exports['rsg-inventory']:GetInventory(stashId)
 
@@ -184,9 +168,6 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
     end)
 end)
 
--- ──────────────────────────────────────────────
--- ABRIR COFRE
--- ──────────────────────────────────────────────
 RegisterNetEvent('rs_camp:server:openChest')
 AddEventHandler('rs_camp:server:openChest', function(campId)
     local src    = source
@@ -197,8 +178,6 @@ AddEventHandler('rs_camp:server:openChest', function(campId)
         if not results or #results == 0 then return end
 
         local row = results[1]
-
-        -- Verificar acceso: propietario o compartido
         local hasAccess = false
 
         if row.owner_identifier == Player.PlayerData.citizenid
@@ -219,7 +198,6 @@ AddEventHandler('rs_camp:server:openChest', function(campId)
             return
         end
 
-        -- Determinar capacidad del cofre
         local capacity = 1000
         local slots    = 50
         for _, v in pairs(Config.Chests) do
@@ -240,9 +218,6 @@ AddEventHandler('rs_camp:server:openChest', function(campId)
     end)
 end)
 
--- ──────────────────────────────────────────────
--- TOGGLE PUERTA (tienda / carpa)
--- ──────────────────────────────────────────────
 RegisterNetEvent('rs_camp:server:toggleDoor')
 AddEventHandler('rs_camp:server:toggleDoor', function(campId)
     local src    = source
@@ -277,9 +252,6 @@ AddEventHandler('rs_camp:server:toggleDoor', function(campId)
     end)
 end)
 
--- ──────────────────────────────────────────────
--- COMANDO: compartir permisos
--- ──────────────────────────────────────────────
 RegisterCommand(Config.Commands.Shareperms, function(source, args)
     local src    = source
     local Player = RSGCore.Functions.GetPlayer(src)
@@ -300,7 +272,6 @@ RegisterCommand(Config.Commands.Shareperms, function(source, args)
 
             local row = results[1]
 
-            -- Solo el propietario puede compartir
             if row.owner_identifier ~= Player.PlayerData.citizenid
             or row.owner_charid     ~= Player.PlayerData.cid then
                 TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src, Config.Text.Dontowner, "menu_textures", "cross", "COLOR_RED", 3000)
@@ -347,9 +318,6 @@ RegisterCommand(Config.Commands.Shareperms, function(source, args)
     )
 end, false)
 
--- ──────────────────────────────────────────────
--- COMANDO: revocar todos los permisos compartidos
--- ──────────────────────────────────────────────
 RegisterCommand(Config.Commands.Unshareperms, function(source, args)
     local src    = source
     local Player = RSGCore.Functions.GetPlayer(src)
@@ -386,9 +354,6 @@ RegisterCommand(Config.Commands.Unshareperms, function(source, args)
     )
 end, false)
 
--- ──────────────────────────────────────────────
--- REGISTRAR ITEMS USABLES
--- ──────────────────────────────────────────────
 local MAX_ITEMS_PER_PLAYER = Config.MaxObject
 
 for itemName, _ in pairs(Config.Items) do
@@ -401,16 +366,12 @@ for itemName, _ in pairs(Config.Items) do
     end)
 end
 
--- ──────────────────────────────────────────────
--- VERIFICAR ZONA Y LÍMITE ANTES DE COLOCAR
--- ──────────────────────────────────────────────
 RegisterNetEvent('rs_camp:server:checkTownAndPlace')
 AddEventHandler('rs_camp:server:checkTownAndPlace', function(itemName, town)
     local src    = source
     local Player = RSGCore.Functions.GetPlayer(src)
     if not Player then return end
 
-    -- Verificar si la ciudad está permitida
     local allowed = Config.AllowedTowns[town]
     if allowed == false then
         exports['rsg-inventory']:CloseInventory(src)
@@ -418,7 +379,6 @@ AddEventHandler('rs_camp:server:checkTownAndPlace', function(itemName, town)
         return
     end
 
-    -- Verificar límite de campamentos del personaje
     exports.oxmysql:execute(
         'SELECT COUNT(*) as count FROM rs_camp WHERE owner_identifier = @identifier AND owner_charid = @charid',
         {
@@ -440,9 +400,6 @@ AddEventHandler('rs_camp:server:checkTownAndPlace', function(itemName, town)
     )
 end)
 
--- ──────────────────────────────────────────────
--- QUITAR ITEM AL COLOCAR EL CAMPAMENTO
--- ──────────────────────────────────────────────
 RegisterNetEvent('rs_camp:removeItem')
 AddEventHandler('rs_camp:removeItem', function(itemName)
     local src = source
