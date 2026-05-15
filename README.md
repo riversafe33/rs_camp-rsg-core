@@ -6,7 +6,11 @@ Your support goes directly toward upgrading my PC and developing more free scrip
 
 Thank you for your support! ❤️
 
+Donations
+
 https://ko-fi.com/riversafe33
+
+https://www.paypal.com/donate/?hosted_button_id=NX4ENSGYS6YJN
 
 Dependency
 
