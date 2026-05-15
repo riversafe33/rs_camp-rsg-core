@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Camp Placement</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Segoe UI", sans-serif;
+            background: transparent;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        #camp-wrapper {
+            position: absolute;
+            top: 10%;
+            right: 3%;
+            z-index: 9999;
+        }
+
+        .panel {
+            width: 260px;
+            background: rgba(15, 15, 15, 0.90);
+            border-radius: 8px;
+            padding: 14px;
+            color: #fff;
+            box-shadow: 0 0 12px rgba(0,0,0,0.7);
+        }
+
+        h2 {
+            margin: 0 0 10px 0;
+            font-size: 18px;
+            text-align: center;
+        }
+
+        .section {
+            margin-top: 12px;
+        }
+
+        .section label {
+            font-size: 12px;
+            opacity: 0.8;
+        }
+
+        .row {
+            display: flex;
+            gap: 6px;
+            margin-top: 6px;
+        }
+
+        button {
+            flex: 1;
+            padding: 6px;
+            font-size: 12px;
+            border-radius: 4px;
+            border: none;
+            background: rgba(255,255,255,0.08);
+            color: #fff;
+            cursor: pointer;
+            transition: 0.15s;
+        }
+
+        button:hover {
+            background: rgba(255,255,255,0.18);
+        }
+
+        button.confirm {
+            background: rgba(46, 204, 113, 0.85);
+        }
+
+        button.cancel {
+            background: rgba(231, 76, 60, 0.85);
+        }
+
+        #speed-range {
+            width: 100%;
+            margin-top: 4px;
+        }
+
+        #speed-value {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+
+<div id="camp-wrapper" class="hidden">
+
+    <div class="panel">
+
+        <h2 id="txt-title"></h2>
+
+        <div class="section">
+            <label id="txt-speed"></label>
+            <input id="speed-range" type="range" min="0.01" max="2" step="0.01" value="0.05">
+            <span id="speed-value">0.05</span>
+        </div>
+
+        <div class="section">
+            <label id="txt-move"></label>
+            <div class="row">
+                <button data-action="forward" id="txt-forward"></button>
+                <button data-action="backward" id="txt-backward"></button>
+            </div>
+            <div class="row">
+                <button data-action="left" id="txt-left"></button>
+                <button data-action="right" id="txt-right"></button>
+            </div>
+            <div class="row">
+                <button data-action="up" id="txt-up"></button>
+                <button data-action="down" id="txt-down"></button>
+            </div>
+        </div>
+
+        <div class="section">
+            <label id="txt-rotx"></label>
+            <div class="row">
+                <button data-action="rot_x_minus" id="txt-rotx-minus"></button>
+                <button data-action="rot_x_plus" id="txt-rotx-plus"></button>
+            </div>
+        </div>
+
+        <div class="section">
+            <label id="txt-roty"></label>
+            <div class="row">
+                <button data-action="rot_y_minus" id="txt-roty-minus"></button>
+                <button data-action="rot_y_plus" id="txt-roty-plus"></button>
+            </div>
+        </div>
+
+        <div class="section">
+            <label id="txt-rotz"></label>
+            <div class="row">
+                <button data-action="rot_z_minus" id="txt-rotz-minus"></button>
+                <button data-action="rot_z_plus" id="txt-rotz-plus"></button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="row">
+                <button class="confirm" data-action="confirm" id="txt-confirm"></button>
+                <button class="cancel" data-action="cancel" id="txt-cancel"></button>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+<script>
+    let currentSpeed = 0.05;
+
+    window.addEventListener("message", function (event) {
+        const d = event.data;
+
+        if (d.show !== undefined) {
+            const wrapper = document.getElementById("camp-wrapper");
+            if (d.show) wrapper.classList.remove("hidden");
+            else wrapper.classList.add("hidden");
+        }
+
+        if (d.txt) {
+            document.getElementById("txt-title").innerText = d.txt.Title;
+            document.getElementById("txt-speed").innerText = d.txt.Speed;
+
+            document.getElementById("txt-move").innerText = d.txt.Move;
+            document.getElementById("txt-forward").innerText = d.txt.Forward;
+            document.getElementById("txt-backward").innerText = d.txt.Backward;
+            document.getElementById("txt-left").innerText = d.txt.Left;
+            document.getElementById("txt-right").innerText = d.txt.Right;
+            document.getElementById("txt-up").innerText = d.txt.Up;
+            document.getElementById("txt-down").innerText = d.txt.Down;
+
+            document.getElementById("txt-rotx").innerText = d.txt.RotX;
+            document.getElementById("txt-rotx-minus").innerText = d.txt.RotMinus;
+            document.getElementById("txt-rotx-plus").innerText = d.txt.RotPlus;
+
+            document.getElementById("txt-roty").innerText = d.txt.RotY;
+            document.getElementById("txt-roty-minus").innerText = d.txt.RotMinus;
+            document.getElementById("txt-roty-plus").innerText = d.txt.RotPlus;
+
+            document.getElementById("txt-rotz").innerText = d.txt.RotZ;
+            document.getElementById("txt-rotz-minus").innerText = d.txt.RotMinus;
+            document.getElementById("txt-rotz-plus").innerText = d.txt.RotPlus;
+
+            document.getElementById("txt-confirm").innerText = d.txt.Confirm;
+            document.getElementById("txt-cancel").innerText = d.txt.Cancel;
+        }
+    });
+
+    function sendAction(action) {
+        fetch(`https://rs_camp/campAction`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                action: action,
+                speed: currentSpeed
+            })
+        }).catch(() => {});
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const speedRange = document.getElementById("speed-range");
+        const speedValue = document.getElementById("speed-value");
+
+        speedRange.addEventListener("input", () => {
+            currentSpeed = parseFloat(speedRange.value);
+            speedValue.textContent = currentSpeed.toFixed(2);
+        });
+
+        document.querySelectorAll("button[data-action]").forEach(btn => {
+            btn.addEventListener("click", () => {
+                sendAction(btn.getAttribute("data-action"));
+            });
+        });
+
+    });
+</script>
+
+</body>
+</html>
