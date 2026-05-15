@@ -12,6 +12,8 @@ Dependency
 
 https://github.com/riversafe33/uiprompt
 
+:movie_camera: Showcase: https://streamable.com/stvsm3
+
 1 - Added the ability to place doors. These can only be opened by the owner, or shared with friends using a command. The command is configurable in the config file.
 
 2 - Added the ability to share ownership of a chest with a friend using the same command as for sharing doors.
@@ -24,7 +26,6 @@ https://github.com/riversafe33/uiprompt
 
 6 - Now the adjustment speed is changed with the Mouse Scroll instead of the input, and it's visible in the NUI.
 
-https://streamable.com/stvsm3
 
 ![1](https://github.com/user-attachments/assets/9321d729-a012-4019-9a9c-14d40c5ae75c)
 
