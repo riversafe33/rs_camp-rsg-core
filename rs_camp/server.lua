@@ -286,7 +286,6 @@ RegisterCommand(Config.Commands.Shareperms, function(source, args)
 
             local targetCitizenid = Target.PlayerData.citizenid
             local targetCharId    = Target.PlayerData.cid
-
             local sharedWith  = json.decode(row.shared_with or '[]') or {}
             local cleanArray  = {}
             local alreadyExists = false
