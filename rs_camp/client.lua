@@ -628,11 +628,6 @@ AddEventHandler('onResourceStop', function(resourceName)
     end
 end)
 
-
-
--- =========NOTIFICATIONS=========--
--- =========NOTIFICATIONS=========--
-
 RegisterNetEvent('rs_camp:ShowTopNotification')
 AddEventHandler('rs_camp:ShowTopNotification',
                 function(tittle, subtitle, duration)
@@ -678,8 +673,6 @@ end
 exports("ShowTopNotification", function(title, subtext, duration)
     local struct1 = DataView.ArrayBuffer(8 * 7)
     struct1:SetInt32(8 * 0, duration)
-    -- struct1:SetInt64(8*1,bigInt(sound_dict))
-    -- struct1:SetInt64(8*2,bigInt(sound))
     local string1 = CreateVarString(10, "LITERAL_STRING", title)
     local string2 = CreateVarString(10, "LITERAL_STRING", subtext)
     local struct2 = DataView.ArrayBuffer(8 * 7)
@@ -707,7 +700,6 @@ exports("ShowAdvancedRightNotification",
     struct2:SetInt64(8 * 2, bigInt(dict))
     struct2:SetInt64(8 * 3, bigInt(GetHashKey(icon)))
     struct2:SetInt64(8 * 5, bigInt(GetHashKey(text_color or "COLOR_ENEMY")))
-    -- struct2:SetInt32(8*6,quality or 1)
 
     Citizen.InvokeNative(0xB249EBCB30DD88E0, struct1:Buffer(), struct2:Buffer(),
                          1)
