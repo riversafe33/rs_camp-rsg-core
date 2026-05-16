@@ -18,17 +18,11 @@ https://github.com/riversafe33/uiprompt
 
 :movie_camera: Showcase: https://streamable.com/stvsm3
 
-1 - Added the ability to place doors. These can only be opened by the owner, or shared with friends using a command. The command is configurable in the config file.
+1 - Ability to place doors. These can only be opened by the owner, or shared with friends using a command. The command is configurable in the config file.
 
-2 - Added the ability to share ownership of a chest with a friend using the same command as for sharing doors.
+2 - Ability to share ownership of a chest with a friend using the same command as for sharing doors.
 
 3 - In the prompt to open the door or the chest, the ID appears so it can be used with the command to share ownership.
-
-4 - Objects can now be rotated in all directions, allowing placement on inclined surfaces.
-
-5 - The issue where some objects weren't recognized for deletion has been resolved
-
-6 - Now the adjustment speed is changed with the Mouse Scroll instead of the input, and it's visible in the NUI.
 
 ![2](https://github.com/user-attachments/assets/ee63b351-712a-4125-8979-beb62bff7d87)
 
