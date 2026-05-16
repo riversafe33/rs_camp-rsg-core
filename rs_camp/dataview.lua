@@ -1,13 +1,3 @@
-
--------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------
------------------ 			DATAVIEW FUNCTIONS					-------------
------------------										-------------
------------------ 		BIG THNKS to gottfriedleibniz for this DataView in LUA.		-------------
------------------ https://gist.github.com/gottfriedleibniz/8ff6e4f38f97dd43354a60f8494eedff	-------------
--------------------------------------------------------------------------------------------------------------
--------------------------------------------------------------------------------------------------------------
-
 local _strblob = string.blob or function(length)
     return string.rep("\0", math.max(40 + 1, length))
 end
@@ -149,34 +139,6 @@ for label,datatype in pairs(DataView.Types) do
         return v
     end
 end
-
-------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------
------------------ 										------------
------------------		END OF DATAVIEW FUNCTIONS					------------
------------------ 										------------
-------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------
-
-
-
---=========NOTIFICATIONS=========--
---=========NOTIFICATIONS=========--
-
-RegisterNetEvent('paintwall:ShowAdvancedRightNotification')
-AddEventHandler('paintwall:ShowAdvancedRightNotification', function(text, dict, icon, text_color, duration)
-    local _dict = dict
-    local _icon = icon
-    if not LoadTexture(_dict) then
-        _dict = "honor_display "
-        LoadTexture(_dict)
-        _icon = "honor_bad"
-    end
-    exports.dodi_paintwall:ShowAdvancedRightNotification(tostring(text), tostring(_dict), tostring(_icon), tostring(text_color), tonumber(duration))
-end)
-
 
 function LoadTexture(dict)
     if Citizen.InvokeNative(0x7332461FC59EB7EC, dict) then
