@@ -152,16 +152,58 @@ function LoadTexture(dict)
     end
 end
 
-
 function bigInt(text)
     local string1 =  DataView.ArrayBuffer(16)
     string1:SetInt64(0,text)
     return string1:GetInt64(0)
 end
 
+exports("ShowAdvancedRightNotification",function(_text, _dict, icon, text_color, duration, quality)
+    local text = CreateVarString(10, "LITERAL_STRING", _text)
+    local dict = CreateVarString(10, "LITERAL_STRING", _dict)
+    local sdict = CreateVarString(10, "LITERAL_STRING", "Transaction_Feed_Sounds")
+    local sound = CreateVarString(10, "LITERAL_STRING", "Transaction_Positive")
 
+    local struct1 = DataView.ArrayBuffer(8*7)
+    struct1:SetInt32(8*0,duration)
+    struct1:SetInt64(8*1,bigInt(sdict))
+    struct1:SetInt64(8*2,bigInt(sound))
 
+    local struct2 = DataView.ArrayBuffer(8*10)
+    struct2:SetInt64(8*1,bigInt(text))
+    struct2:SetInt64(8*2,bigInt(dict))
+    struct2:SetInt64(8*3,bigInt(GetHashKey(icon)))
+    struct2:SetInt64(8*5,bigInt(GetHashKey(text_color or "COLOR_ENEMY")))
+    --struct2:SetInt32(8*6,quality or 1)
 
+    Citizen.InvokeNative(0xB249EBCB30DD88E0,struct1:Buffer(),struct2:Buffer(),1)
+end)
+
+exports("ShowTopNotification", function(title, subtext, duration)
+    local struct1 = DataView.ArrayBuffer(8 * 7)
+    struct1:SetInt32(8 * 0, duration)
+    -- struct1:SetInt64(8*1,bigInt(sound_dict))
+    -- struct1:SetInt64(8*2,bigInt(sound))
+    local string1 = CreateVarString(10, "LITERAL_STRING", title)
+    local string2 = CreateVarString(10, "LITERAL_STRING", subtext)
+    local struct2 = DataView.ArrayBuffer(8 * 7)
+    struct2:SetInt64(8 * 1, bigInt(string1))
+    struct2:SetInt64(8 * 2, bigInt(string2))
+    Citizen.InvokeNative(0xA6F4216AB10EB08E, struct1:Buffer(), struct2:Buffer(),
+                         1, 1)
+end)
+
+exports("ShowObjective",function(text, duration)
+    Citizen.InvokeNative("0xDD1232B332CBB9E7", 3, 1, 0)
+    local string1 = CreateVarString(10, "LITERAL_STRING", text)
+    local struct1 = DataView.ArrayBuffer(8*7)
+    local struct2 = DataView.ArrayBuffer(8*3)
+    struct1:SetInt32(8*0,duration)
+    --struct1:SetInt64(8*1,bigInt(sound_dict))
+    --struct1:SetInt64(8*2,bigInt(sound))
+    struct2:SetInt64(8*1,bigInt(string1))
+
+    Citizen.InvokeNative(0xCEDBF17EFCC0E4A4,struct1:Buffer(),struct2:Buffer(),1)
 end)
 
 exports("ShowAdvancedNotification",function(title, subTitle, dict, icon, duration, color)
@@ -180,4 +222,3 @@ exports("ShowAdvancedNotification",function(title, subTitle, dict, icon, duratio
     struct2:SetInt64(8*6,bigInt(GetHashKey(color or "COLOR_WHITE")))
     Citizen.InvokeNative(0x26E87218390E6729,struct1:Buffer(),struct2:Buffer(),1,1)
 end)
-
