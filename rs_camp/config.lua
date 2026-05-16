@@ -97,26 +97,6 @@ Config.Promp = {
     }
 }
 
-Config.Keys = {
-    moveForward    = 0x6319DB71, -- Arrow Up
-    moveBackward   = 0x05CA7C52, -- Arrow Down
-    moveLeft       = 0xA65EBAB4, -- Arrow Left
-    moveRight      = 0xDEB34313, -- Arrow Right
-    rotateLeftZ    = 0xE6F612E4, -- 1
-    rotateRightZ   = 0x1CE6D9EB, -- 2
-    rotateUpX      = 0x4F49CC4C, -- 3
-    rotateDownX    = 0x8F9F9E58, -- 4
-    rotateLeftY    = 0xAB62E997, -- 5
-    rotateRightY   = 0xA1FDE2A6, -- 6
-    moveUp         = 0xB03A913B, -- 7
-    moveDown       = 0x42385422, -- 8
-    placeOnGround  = 0xB2F377E8, -- F
-    cancelPlace    = 0x760A9C6F, -- G
-    confirmPlace   = 0xC7B5340A, -- ENTER
-    increaseSpeed  = 0xCC1075A7, -- MSCROLLUP
-    decreaseSpeed  = 0xFD0F0C2C, -- MSCROLLDOWN
-}
-
 Config.Chests = {
 	{ object = 's_re_rcboatbox01x', capacity = 400000 },
     { object = 'p_trunk04x', capacity = 700000 },
