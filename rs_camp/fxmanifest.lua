@@ -19,8 +19,8 @@ shared_scripts {
 }
 
 client_scripts {
+    '@ox_lib/init.lua',
     "@uiprompt/uiprompt.lua",
-    'dataview.lua',
     'client.lua',
 }
 
