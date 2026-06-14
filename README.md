@@ -8,6 +8,8 @@ Dependency
 
 https://github.com/riversafe33/uiprompt
 
+https://github.com/Rexshack-RedM/ox_lib
+
 :movie_camera: Showcase: https://streamable.com/stvsm3
 
 1 - Ability to place doors. These can only be opened by the owner, or shared with friends using a command. The command is configurable in the config file.
