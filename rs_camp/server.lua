@@ -1,6 +1,26 @@
 local RSGCore = exports['rsg-core']:GetCoreObject()
 local loadedCamps = {}
 
+local function notiCampSuccess(source, title, message)
+    TriggerClientEvent('ox_lib:notify', source, {
+        title       = title,
+        description = message,
+        type        = 'success',
+        duration    = 4000,
+        position    = 'top'
+    })
+end
+
+local function notiCampError(source, title, message)
+    TriggerClientEvent('ox_lib:notify', source, {
+        title       = title,
+        description = message,
+        type        = 'error',
+        duration    = 3000,
+        position    = 'top'
+    })
+end
+
 local function registerStorage(stashId, label, slots, maxweight)
     exports['rsg-inventory']:CreateInventory(stashId, {
         label     = label,
@@ -129,7 +149,8 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
                 if row.item_name then
                     exports['rsg-inventory']:AddItem(src, row.item_name, 1, nil, nil, 'camp-pickup')
                 end
-
+                notiCampSuccess()
+                notiCampError()
                 TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
                     Config.Text.Picked, "generic_textures", "tick", "COLOR_GREEN", 4000)
             end
@@ -138,6 +159,8 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
 
     exports.oxmysql:execute('SELECT * FROM rs_camp WHERE id = ?', { uniqueId }, function(results)
         if not results or #results == 0 then
+            notiCampSuccess()
+            notiCampError()
             TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
                 Config.Text.Dont, "menu_textures", "cross", "COLOR_RED", 3000)
             return
@@ -148,6 +171,8 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
         local isOwner = (row.owner_citizenid == citizenid)
 
         if not (isOwner or isStaff) then
+            notiCampSuccess()
+            notiCampError()
             TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
                 Config.Text.Dont, "menu_textures", "cross", "COLOR_RED", 3000)
             return
@@ -162,6 +187,8 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
         local stash   = exports['rsg-inventory']:GetInventory(stashId)
 
         if stash and stash.items and next(stash.items) then
+            notiCampSuccess()
+            notiCampError()
             TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
                 Config.Text.chestfull, "menu_textures", "cross", "COLOR_RED", 3000)
         else
@@ -200,8 +227,7 @@ AddEventHandler('rs_camp:server:openChest', function(campId)
         end
 
         if not hasAccess then
-            TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                Config.Text.Dontchest, "menu_textures", "cross", "COLOR_RED", 2000)
+            notiCampError(src, Config.Text.Camp, Config.Text.Dontchest)
             return
         end
 
@@ -255,8 +281,7 @@ AddEventHandler('rs_camp:server:toggleDoor', function(campId)
         end
 
         if not hasAccess then
-            TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                Config.Text.Dontdoor, "menu_textures", "cross", "COLOR_RED", 2000)
+            notiCampError(src, Config.Text.Camp, Config.Text.Dontdoor)
             return
         end
 
@@ -280,23 +305,20 @@ RegisterCommand(Config.Commands.Shareperms, function(source, args)
         { campId },
         function(results)
             if not results or #results == 0 then
-                TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                    Config.Text.Permsdont, "menu_textures", "cross", "COLOR_RED", 3000)
+                notiCampError(src, Config.Text.Camp, Config.Text.Permsdont)
                 return
             end
 
             local row = results[1]
 
             if row.owner_citizenid ~= citizenid then
-                TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                    Config.Text.Dontowner, "menu_textures", "cross", "COLOR_RED", 3000)
+                notiCampError(src, Config.Text.Camp, Config.Text.Dontowner)
                 return
             end
 
             local Target = RSGCore.Functions.GetPlayer(targetPlayerId)
             if not Target then
-                TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                    Config.Text.Playerno, "menu_textures", "cross", "COLOR_RED", 3000)
+                notiCampError(src, Config.Text.Camp, Config.Text.Playerno)
                 return
             end
 
@@ -316,8 +338,7 @@ RegisterCommand(Config.Commands.Shareperms, function(source, args)
             end
 
             if alreadyExists then
-                TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                    Config.Text.Already, "menu_textures", "cross", "COLOR_RED", 3000)
+                notiCampError(src, Config.Text.Camp, Config.Text.Already)
                 return
             end
 
@@ -327,8 +348,7 @@ RegisterCommand(Config.Commands.Shareperms, function(source, args)
                 'UPDATE rs_camp SET shared_with = ? WHERE id = ?',
                 { json.encode(cleanArray), campId },
                 function()
-                    TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                        Config.Text.Permsyes, "generic_textures", "tick", "COLOR_GREEN", 3000)
+                    notiCampSuccess(src, Config.Text.Camp, Config.Text.Permsyes)
                 end
             )
         end
@@ -350,16 +370,14 @@ RegisterCommand(Config.Commands.Unshareperms, function(source, args)
         { campId },
         function(results)
             if not results or #results == 0 then
-                TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                    Config.Text.Permsdont, "menu_textures", "cross", "COLOR_RED", 3000)
+                notiCampError(src, Config.Text.Camp, Config.Text.Permsdont)
                 return
             end
 
             local row = results[1]
 
             if row.owner_citizenid ~= citizenid then
-                TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                    Config.Text.Dontowner, "menu_textures", "cross", "COLOR_RED", 3000)
+                notiCampError(src, Config.Text.Camp, Config.Text.Dontowner)
                 return
             end
 
@@ -367,8 +385,7 @@ RegisterCommand(Config.Commands.Unshareperms, function(source, args)
                 'UPDATE rs_camp SET shared_with = ? WHERE id = ?',
                 { json.encode({}), campId },
                 function()
-                    TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                        Config.Text.Allpermission, "generic_textures", "tick", "COLOR_GREEN", 3000)
+                    notiCampSuccess(src, Config.Text.Camp, Config.Text.Allpermission)
                 end
             )
         end
@@ -396,8 +413,7 @@ AddEventHandler('rs_camp:server:checkTownAndPlace', function(itemName, town)
     local allowed = Config.AllowedTowns[town]
     if allowed == false then
         exports['rsg-inventory']:CloseInventory(src)
-        TriggerClientEvent('rs_camp:ShowTopNotification', src,
-            Config.Text.Camp, Config.Text.NotInTown, 4000)
+        notiCampError(src, Config.Text.Camp, Config.Text.NotInTown)
         return
     end
 
@@ -409,8 +425,7 @@ AddEventHandler('rs_camp:server:checkTownAndPlace', function(itemName, town)
 
             if count >= MAX_ITEMS_PER_PLAYER then
                 exports['rsg-inventory']:CloseInventory(src)
-                TriggerClientEvent('rs_camp:ShowTopNotification', src,
-                    Config.Text.Camp, Config.Text.MaxItems, 4000)
+                notiCampError(src, Config.Text.Camp, Config.Text.MaxItems)
                 return
             end
 
