@@ -12,10 +12,6 @@ local campPromptGroup = UipromptGroup:new(Config.Promp.Controls)
 local campPickUpPrompt = Uiprompt:new(Config.Promp.Key.Pickut, Config.Promp.Collect, campPromptGroup)
 campPickUpPrompt:setHoldMode(true)
 
-local chestPromptGroup = UipromptGroup:new(Config.Promp.Chest)
-local chestPrompt = Uiprompt:new(Config.Promp.Key.Chest, Config.Promp.Chestopen, chestPromptGroup)
-chestPrompt:setStandardMode(true)
-
 local doorPromptGroup = UipromptGroup:new(Config.Promp.Door)
 local doorPrompt = Uiprompt:new(Config.Promp.Key.Door, Config.Promp.Dooropen, doorPromptGroup)
 doorPrompt:setStandardMode(true)
@@ -204,13 +200,25 @@ RegisterCommand(Config.Commands.Camp, function()
     targetEnabled = not targetEnabled
 
     if targetEnabled then
-        TriggerEvent('rs_camp:ShowAdvancedRightNotification', Config.Text.Targeton, "generic_textures", "tick", "COLOR_GREEN", 4000)
+        lib.notify({
+            title       = Config.Text.Camp,
+            description = Config.Text.Targeton,
+            type        = 'success',
+            duration    = 3000,
+            position    = 'top'
+        })
         SendNUIMessage({
             action = "showtarget",
             text = Config.Text.TargetActiveText .. Config.Commands.Camp .. Config.Text.TargetActiveText1
         })
     else
-        TriggerEvent('rs_camp:ShowAdvancedRightNotification', Config.Text.Targetoff, "menu_textures", "cross", "COLOR_RED", 2500)
+        lib.notify({
+            title       = Config.Text.Camp,
+            description = Config.Text.Targetoff,
+            type        = 'error',
+            duration    = 3000,
+            position    = 'top'
+        })
         hideCampPrompt()
         SendNUIMessage({ action = "hidetarget" })
     end
@@ -250,35 +258,37 @@ CreateThread(function()
     end
 end)
 
-local function updateChestPrompts()
-    local playerPed = PlayerPedId()
-    local playerCoords = GetEntityCoords(playerPed)
-    closestChestEntity, closestChestId = nil, nil
-    local closestDistance = 2.0
+local registeredChests = {}
 
-    for uniqueId, entity in pairs(campsEntities or {}) do
-        if DoesEntityExist(entity) and isChestObject(GetEntityModel(entity)) then
-            local entCoords = GetEntityCoords(entity)
-            local distance = #(playerCoords - entCoords)
-            if distance <= closestDistance then
-                closestDistance = distance
-                closestChestEntity = entity
-                closestChestId = uniqueId
+local function addChestTarget(uniqueId, entity)
+    if not DoesEntityExist(entity) then return end
+    if registeredChests[uniqueId] then return end -- evita duplicados
+
+    exports.ox_target:addLocalEntity(entity, {
+        {
+            name = 'open_chest_' .. tostring(uniqueId),
+            label = Config.Promp.Chestopen .. ' ID - ' .. tostring(uniqueId),
+            icon = 'fa-solid fa-box-open',
+            distance = 3.0,
+            onSelect = function()
+                TriggerServerEvent('rs_camp:server:openChest', uniqueId)
+            end,
+        }
+    })
+
+    registeredChests[uniqueId] = true
+end
+
+CreateThread(function()
+    while true do
+        Wait(500)
+        for uniqueId, entity in pairs(campsEntities or {}) do
+            if DoesEntityExist(entity) and isChestObject(GetEntityModel(entity)) then
+                addChestTarget(uniqueId, entity)
             end
         end
     end
-
-    local foundChest = (closestChestEntity ~= nil)
-
-    chestPromptGroup:setActive(foundChest)
-
-    if foundChest and closestChestId then
-        chestPrompt:setText(Config.Promp.Chestopen .. " ID - " .. tostring(closestChestId) .. " ")
-    end
-
-    chestPrompt:setVisible(foundChest)
-    chestPrompt:setEnabled(foundChest)
-end
+end)
 
 local function updateDoorPrompts()
     local playerPed = PlayerPedId()
@@ -316,26 +326,11 @@ CreateThread(function()
     end
 end)
 
-CreateThread(function()
-    while true do
-        Wait(500)
-        updateChestPrompts()
-    end
-end)
-
 campPromptGroup:setOnHoldModeJustCompleted(function(group, prompt)
     if closestCampEntity and DoesEntityExist(closestCampEntity) then
         if prompt == campPickUpPrompt and closestCampId then
             TriggerServerEvent('rs_camp:server:pickUpByOwner', closestCampId)
             hideCampPrompt()
-        end
-    end
-end)
-
-chestPromptGroup:setOnStandardModeJustCompleted(function(group, prompt)
-    if closestChestEntity and DoesEntityExist(closestChestEntity) then
-        if prompt == chestPrompt and closestChestId then
-            TriggerServerEvent('rs_camp:server:openChest', closestChestId)
         end
     end
 end)
@@ -531,7 +526,13 @@ CreateThread(function()
                     )
 
                     TriggerServerEvent("rs_camp:removeItem", lastItemName)
-                    TriggerEvent('rs_camp:ShowAdvancedRightNotification', Config.Text.Place, "generic_textures", "tick", "COLOR_GREEN", 4000)
+                    lib.notify({
+                        title       = Config.Text.Camp,
+                        description = Config.Text.Place,
+                        type        = 'success',
+                        duration    = 3000,
+                        position    = 'top'
+                    })
 
                     lastItemName = nil
                     actionQueue = nil
@@ -550,7 +551,13 @@ CreateThread(function()
                     SafeDeleteObject(tempObj)
                     tempObj = nil
 
-                    TriggerEvent('rs_camp:ShowAdvancedRightNotification', Config.Text.Cancel, "menu_textures", "cross",  "COLOR_RED", 4000)
+                    lib.notify({
+                        title       = Config.Text.Camp,
+                        description = Config.Text.Cancel,
+                        type        = 'error',
+                        duration    = 3000,
+                        position    = 'top'
+                    })
 
                     lastItemName = nil
                     actionQueue = nil
@@ -626,81 +633,4 @@ AddEventHandler('onResourceStop', function(resourceName)
         campsData[uniqueId] = nil
         dynamicDoors[uniqueId] = nil
     end
-end)
-
-RegisterNetEvent('rs_camp:ShowTopNotification')
-AddEventHandler('rs_camp:ShowTopNotification',
-                function(tittle, subtitle, duration)
-    exports.rs_camp:ShowTopNotification(tostring(tittle),
-                                                    tostring(subtitle),
-                                                    tonumber(duration))
-end)
-
-RegisterNetEvent('rs_camp:ShowAdvancedRightNotification')
-AddEventHandler('rs_camp:ShowAdvancedRightNotification',
-                function(text, dict, icon, text_color, duration)
-    local _dict = dict
-    local _icon = icon
-    if not LoadTexture(_dict) then
-        _dict = "honor_display "
-        LoadTexture(_dict)
-        _icon = "honor_bad"
-    end
-    exports.rs_camp:ShowAdvancedRightNotification(tostring(text),
-                                                              tostring(_dict),
-                                                              tostring(_icon),
-                                                              tostring(
-                                                                  text_color),
-                                                              tonumber(duration))
-end)
-
-function LoadTexture(dict)
-    if Citizen.InvokeNative(0x7332461FC59EB7EC, dict) then
-        RequestStreamedTextureDict(dict, true)
-        while not HasStreamedTextureDictLoaded(dict) do Wait(1) end
-        return true
-    else
-        return false
-    end
-end
-
-function bigInt(text)
-    local string1 = DataView.ArrayBuffer(16)
-    string1:SetInt64(0, text)
-    return string1:GetInt64(0)
-end
-
-exports("ShowTopNotification", function(title, subtext, duration)
-    local struct1 = DataView.ArrayBuffer(8 * 7)
-    struct1:SetInt32(8 * 0, duration)
-    local string1 = CreateVarString(10, "LITERAL_STRING", title)
-    local string2 = CreateVarString(10, "LITERAL_STRING", subtext)
-    local struct2 = DataView.ArrayBuffer(8 * 7)
-    struct2:SetInt64(8 * 1, bigInt(string1))
-    struct2:SetInt64(8 * 2, bigInt(string2))
-    Citizen.InvokeNative(0xA6F4216AB10EB08E, struct1:Buffer(), struct2:Buffer(),
-                         1, 1)
-end)
-
-exports("ShowAdvancedRightNotification",
-        function(_text, _dict, icon, text_color, duration, quality)
-    local text = CreateVarString(10, "LITERAL_STRING", _text)
-    local dict = CreateVarString(10, "LITERAL_STRING", _dict)
-    local sdict = CreateVarString(10, "LITERAL_STRING",
-                                  "Transaction_Feed_Sounds")
-    local sound = CreateVarString(10, "LITERAL_STRING", "Transaction_Positive")
-
-    local struct1 = DataView.ArrayBuffer(8 * 7)
-    struct1:SetInt32(8 * 0, duration)
-    struct1:SetInt64(8 * 1, bigInt(sdict))
-    struct1:SetInt64(8 * 2, bigInt(sound))
-
-    local struct2 = DataView.ArrayBuffer(8 * 10)
-    struct2:SetInt64(8 * 1, bigInt(text))
-    struct2:SetInt64(8 * 2, bigInt(dict))
-    struct2:SetInt64(8 * 3, bigInt(GetHashKey(icon)))
-    struct2:SetInt64(8 * 5, bigInt(GetHashKey(text_color or "COLOR_ENEMY")))
-
-    Citizen.InvokeNative(0xB249EBCB30DD88E0, struct1:Buffer(), struct2:Buffer(),
-                         1)
 end)
