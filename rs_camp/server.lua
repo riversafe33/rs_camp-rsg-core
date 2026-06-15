@@ -149,20 +149,14 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
                 if row.item_name then
                     exports['rsg-inventory']:AddItem(src, row.item_name, 1, nil, nil, 'camp-pickup')
                 end
-                notiCampSuccess()
-                notiCampError()
-                TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                    Config.Text.Picked, "generic_textures", "tick", "COLOR_GREEN", 4000)
+                notiCampSuccess(src, Config.Text.Camp, Config.Text.Picked)
             end
         end)
     end
 
     exports.oxmysql:execute('SELECT * FROM rs_camp WHERE id = ?', { uniqueId }, function(results)
         if not results or #results == 0 then
-            notiCampSuccess()
-            notiCampError()
-            TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                Config.Text.Dont, "menu_textures", "cross", "COLOR_RED", 3000)
+            notiCampError(src, Config.Text.Camp, Config.Text.Dont)
             return
         end
 
@@ -171,10 +165,7 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
         local isOwner = (row.owner_citizenid == citizenid)
 
         if not (isOwner or isStaff) then
-            notiCampSuccess()
-            notiCampError()
-            TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                Config.Text.Dont, "menu_textures", "cross", "COLOR_RED", 3000)
+            notiCampError(src, Config.Text.Camp, Config.Text.Dont)
             return
         end
 
@@ -187,10 +178,7 @@ AddEventHandler('rs_camp:server:pickUpByOwner', function(uniqueId)
         local stash   = exports['rsg-inventory']:GetInventory(stashId)
 
         if stash and stash.items and next(stash.items) then
-            notiCampSuccess()
-            notiCampError()
-            TriggerClientEvent('rs_camp:ShowAdvancedRightNotification', src,
-                Config.Text.chestfull, "menu_textures", "cross", "COLOR_RED", 3000)
+            notiCampError(src, Config.Text.Camp, Config.Text.chestfull)
         else
             RemoveCamp(row)
         end
